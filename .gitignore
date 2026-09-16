@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+frontend/dist/
+
+# Environment / secrets
+.env
+*.local
+
+# Local database (mongodb-memory-server persistence)
+backend/.mongo-data/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# OpenCode
+.opencode/
