@@ -88,13 +88,14 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
-      console.log(`VERAVOTE backend running on port ${PORT} in ${process.env.NODE_ENV} mode`);
-    });
   } catch (error) {
-    console.error(`Failed to start server: ${error.message}`);
-    process.exit(1);
+    // Do not crash the process; keep serving so health checks pass and
+    // endpoints return friendly 500s until MONGO_URI is reachable.
+    console.error(`MongoDB connection failed: ${error.message}`);
   }
+  app.listen(PORT, () => {
+    console.log(`VERAVOTE backend running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  });
 };
 
 startServer();
