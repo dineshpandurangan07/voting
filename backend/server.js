@@ -20,6 +20,29 @@ const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
+app.get('/api/__diag', async (req, res) => {
+  const out = {};
+  try {
+    const uri = process.env.MONGO_URI || '';
+    out.hasURI = !!uri;
+    out.host = (uri.match(/@([^/?]+)/) || [])[1] || '(none)';
+    const dns = require('dns');
+    try {
+      out.srv = await new Promise((res2, rej2) => require('dns').resolveSrv('_mongodb._tcp.' + out.host, (e, a) => e ? rej2(e) : res2(String(a[0] && a[0].name))));
+    } catch (e) { out.srv = 'SRV_ERR ' + e.code; }
+    const mongoose = require('mongoose');
+    try {
+      await Promise.race([
+        mongoose.connect(uri, { serverSelectionTimeoutMS: 6000 }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('forced-timeout')), 12000)),
+      ]);
+      out.connect = 'CONNECTED';
+      await mongoose.disconnect();
+    } catch (e) { out.connect = 'FAIL ' + e.name + ': ' + e.message; }
+  } catch (e) { out.fatal = e.message; }
+  res.json(out);
+});
+
 app.use(helmet());
 
 app.use(
