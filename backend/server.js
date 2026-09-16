@@ -32,7 +32,9 @@ app.use(
         'http://localhost:4173',
         'http://127.0.0.1:4173',
       ];
-      if (!origin || allowed.includes(origin) || process.env.NODE_ENV !== 'production') {
+      const host = origin ? new URL(origin).hostname : '';
+      const isVercel = host.endsWith('.vercel.app');
+      if (!origin || allowed.includes(origin) || process.env.NODE_ENV !== 'production' || isVercel) {
         return cb(null, true);
       }
       return cb(new Error('Not allowed by CORS'));
