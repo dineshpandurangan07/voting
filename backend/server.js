@@ -3,6 +3,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 
 const authRoutes = require('./routes/auth');
@@ -19,29 +20,6 @@ const notificationRoutes = require('./routes/notifications');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
-
-app.get('/api/__diag', async (req, res) => {
-  const out = {};
-  try {
-    const uri = process.env.MONGO_URI || '';
-    out.hasURI = !!uri;
-    out.host = (uri.match(/@([^/?]+)/) || [])[1] || '(none)';
-    const dns = require('dns');
-    try {
-      out.srv = await new Promise((res2, rej2) => require('dns').resolveSrv('_mongodb._tcp.' + out.host, (e, a) => e ? rej2(e) : res2(String(a[0] && a[0].name))));
-    } catch (e) { out.srv = 'SRV_ERR ' + e.code; }
-    const mongoose = require('mongoose');
-    try {
-      await Promise.race([
-        mongoose.connect(uri, { serverSelectionTimeoutMS: 6000 }),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('forced-timeout')), 12000)),
-      ]);
-      out.connect = 'CONNECTED';
-      await mongoose.disconnect();
-    } catch (e) { out.connect = 'FAIL ' + e.name + ': ' + e.message; }
-  } catch (e) { out.fatal = e.message; }
-  res.json(out);
-});
 
 app.use(helmet());
 
@@ -83,6 +61,17 @@ const limiter = rateLimit({
 
 app.use('/api', limiter);
 
+const ensureDBConnection = async (req, res, next) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      await connectDB();
+    }
+    next();
+  } catch (err) {
+    return res.status(503).json({ success: false, message: err.message });
+  }
+};
+
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -93,6 +82,8 @@ app.get('/api/health', (req, res) => {
     },
   });
 });
+
+app.use('/api', ensureDBConnection);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/elections', electionRoutes);
