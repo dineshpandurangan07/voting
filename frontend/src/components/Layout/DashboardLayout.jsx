@@ -32,7 +32,9 @@ export default function DashboardLayout() {
       <div className="hidden lg:flex fixed inset-y-0 left-0">
         <Sidebar isMobile={false} />
       </div>
-      <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} isMobile={isMobile} />
+      {isMobile && (
+        <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} isMobile />
+      )}
 
       <div className="lg:pl-64">
         <TopNav onMenuClick={() => setMobileOpen(true)} />
