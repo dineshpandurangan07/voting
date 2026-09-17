@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Session = require('../models/Session');
+const { jwtSecret } = require('../config/jwt');
 
 exports.protect = async (req, res, next) => {
   try {
@@ -19,7 +20,7 @@ exports.protect = async (req, res, next) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      decoded = jwt.verify(token, jwtSecret);
     } catch (error) {
       return res.status(401).json({
         success: false,

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { jwtSecret } = require('../config/jwt');
 
 const userSchema = new mongoose.Schema(
   {
@@ -91,7 +92,7 @@ userSchema.methods.generateAuthToken = function (sessionId) {
       role: this.role,
       sessionId: sessionId || undefined,
     },
-    process.env.JWT_SECRET,
+    jwtSecret,
     {
       expiresIn: process.env.JWT_EXPIRE || '7d',
     }
